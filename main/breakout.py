@@ -1,4 +1,4 @@
-import sys, pygame, random
+import sys, pygame, random,time
 
 class Wall():
 
@@ -26,14 +26,64 @@ class Wall():
             self.brickrect[i] = self.brickrect[i].move(xpos, ypos)
             xpos = xpos + self.bricklength
 
+class obstlacles:
+    def __init__(self):
+        self.arr = []
+
+    def add(self,n):
+        self.arr.clear()
+        while n:
+            x = [random.choice(range(10, 630)) , random.choice(range(200,400)), random.choice((+1,-1))]
+            self.arr.append(x)
+            n -= 1;
+
+
+def obs_collide():
+    global score,xspeed_init,yspeed_init,width
+    sz = len(obs)
+    # mn = obs[0][0]*screen_width + obb.arr[0][1]
+    # mx = obb.arr[sz-1][0]*screen_width + obb.arr[sz-1][1]
+    l = 0;
+    e = sz-1;
+    print(obs)
+    while(l<=e):
+        mid = int((l+e)/2)
+
+        cur = ballrect.x*width + ballrect.y
+        x = obs[mid].x*width + obs[mid].y
+        if(x > cur):
+            if ballrect.colliderect(obs[mid]):
+                score+=20
+            break
+            l = mid+1
+        elif(x < cur):
+            if ballrect.colliderect(obs[mid]):
+                score+=20
+            break
+            e = mid-1
+        else:
+            score+=20
+            break
+
+def object_collide():
+    global score
+    for i in range(len(obs)-1):
+        if ballrect.colliderect(obs[i]):
+            if obb.arr[i][2]>=1:
+                score+=20
+            else:
+                score-=20
+            obs.pop(i)
+            obb.arr.pop(i)
 
 xspeed_init = 6
 yspeed_init = 6
 max_lives = 5
 bat_speed = 30
 score = 0 
-bgcolour = 0x2F, 0x4F, 0x4F  # darkslategrey        
+bgcolour = 0,0,0  # darkslategrey        
 size = width, height = 640, 480
+obs=[]
 
 pygame.init()            
 screen = pygame.display.set_mode(size)
@@ -62,6 +112,11 @@ clock = pygame.time.Clock()
 pygame.key.set_repeat(1,30)       
 pygame.mouse.set_visible(0)       # turn off mouse pointer
 
+obb = obstlacles()
+obb.add(10)
+
+prev_time = time.perf_counter()
+
 while 1:
 
     # 60 frames per second
@@ -82,6 +137,19 @@ while 1:
                 batrect = batrect.move(bat_speed, 0)
                 if (batrect.right > width):                            
                     batrect.right = width
+
+    new_time = time.perf_counter()
+    if new_time - prev_time > 5.0:
+        prev_time = new_time
+        obb.arr.clear()
+        obb.add(5)
+        obs.clear()
+        for ele in obb.arr:
+            x = pygame.Rect(ele[0], ele[1], 30,30)
+            obs.append(x)
+
+    object_collide()
+
 
     # check if bat has hit ball    
     if ballrect.bottom >= batrect.top and \
@@ -180,6 +248,13 @@ while 1:
     scoretextrect = scoretextrect.move(width - scoretextrect.right, 0)
     screen.blit(scoretext, scoretextrect)
 
+    # Visuals 
+    # screen.fill((0,0,0))
+    for i in range(len(obs)-1):
+        if obb.arr[i][2] == 1:
+            pygame.draw.rect(screen, (228, 227, 227), obs[i])
+        else:
+            pygame.draw.rect(screen, (132, 169, 172), obs[i])
     for i in range(0, len(wall.brickrect)):
         screen.blit(wall.brick, wall.brickrect[i])    
 
